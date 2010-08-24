@@ -19,9 +19,9 @@ method update_order($id, $price, $qty, $cb) {
                                                     on_ready => !$new_o->{_updated} ? sub {
                                                         my $status = shift;
 #                                                        warn "==> status after update: $status";
-                                                        $status = 'updated' if $status eq 'new' || $status eq 'submitted';
+#                                                        $status = 'updated' if $status eq 'new' || $status eq 'submitted';
                                                         $o->{on_ready}->($status);
-                                                    } : $new_o->{on_ready} );
+                                                    } : $o->{on_ready} );
         $new_o->{_updated} = 1;
         $cb->('updated');
     };
