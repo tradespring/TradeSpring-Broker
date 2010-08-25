@@ -10,6 +10,7 @@ with 'MooseX::Traits';
 has '+_trait_namespace' => (default => 'TradeSpring::Broker::Role');
 
 has orders => (is => "rw", isa => "HashRef", default => sub { {} });
+has filled_orders => (is => "rw", isa => "HashRef", default => sub { {} });
 has delayed => (is => "rw", isa => "ArrayRef", default => sub { [] });
 has hit_probability => (is => "rw", isa => "Int", default => sub { 1 });
 
@@ -34,9 +35,17 @@ method register_order {
     my $on_summary = delete $callbacks{on_summary};
     $self->orders->{$id} = $self->submit_order($order, %callbacks,
                                                $on_summary ?
-                                                   (on_summary => sub { $on_summary->(@_);
-                                                                        delete $self->orders->{$id};
-                                                                    }) : (),
+                                                   (on_summary => sub {
+                                                        $on_summary->(@_);
+                                                        my $o = delete $self->orders->{$id};
+                                                        if ($o->{matched}) {
+                                                            my $order = $o->{order};
+                                                            $order->{qty} = $o->{matched};
+                                                            $order->{price} = $o->{price_sum} / $o->{matched};
+                                                            $order->{fill_time} = $o->{last_fill_time};
+                                                            $self->filled_orders->{$id} = $order;
+                                                        }
+                                                    }) : (),
                                                $on_ready ?
                                                    (on_ready => sub { $on_ready->($id, @_) }) : ()
                                                );
@@ -51,8 +60,12 @@ method get_order ($id) {
 }
 
 method get_orders($cb) {
-    for (keys %{$self->orders}) {
-        $cb->('new', $_, $self->orders->{$_}{order}); # XXX
+    for (keys %{$self->filled_orders}) {
+        $cb->('filled', $_, $self->filled_orders->{$_}); # XXX
+    }
+    for (sort { ($self->orders->{$a}->{order}{attached_to} || 0) <=> ($self->orders->{$b}->{order}{attached_to} || 0) }
+             keys %{$self->orders}) {
+        $cb->('new', $_, $self->orders->{$_}{order}); # XXX: status
     }
 }
 
@@ -66,9 +79,12 @@ method unregister_order ($id, $cb) {
                         });
 }
 
-method fill_order ($o, $price, $qty) {
+method fill_order ($o, $price, $qty, $time) {
     $o->{matched} += $qty;
+    $o->{price_sum} ||= 0;
+    $o->{price_sum} += $price * $qty;
     $o->{on_match}->($price, $qty);
+    $o->{last_fill_time} = $time;
     if ($o->{matched} == $o->{order}{qty}) {
         $o->{on_summary}->($o->{matched}, 0);
     }

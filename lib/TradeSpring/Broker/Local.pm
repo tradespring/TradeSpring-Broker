@@ -67,20 +67,17 @@ method on_price ($price, $qty_limit, $time) {
 
             my $qty = min($qty_limit ? $qty_limit : (), $o->{order}{qty} - $o->{matched});
 
-            $self->fill_order($_, $o, $p, $qty);
+            $self->fill_order($o, $p, $qty, $time);
         }
     }
 }
 
 
-method fill_order ($id, $o, $price, $qty) {
-    $o->{matched} += $qty;
-    $o->{on_match}->($price, $qty);
+after 'fill_order' => method ($o) {
     if ($o->{matched} == $o->{order}{qty}) {
-        $o->{on_summary}->($o->{matched}, 0);
-        delete $self->local_orders->{$_};
+        delete $self->local_orders->{$o->{order}{id}};
     }
-}
+};
 
 __PACKAGE__->meta->make_immutable;
 no Moose;
