@@ -41,13 +41,10 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             $o->{on_ready}->('new') if $o->{on_ready};
         }
         if ($o->{execute}->($price)) {
+            $o->{cancelled}++;
             delete $self->stp_orders->{$_};
 #            warn "==> submitting mkt  / $o->{order}{qty} / $o $o->{on_summary}";
-            my $new_o = { id => $o->{order}{id},
-                          dir => $o->{order}{dir},
-                          type => 'mkt',
-                          price => 0,
-                          qty => $o->{order}{qty} };
+            my $new_o = { %{$o->{order}}, type => 'mkt', price => 0 };
             $self->orders->{$new_o->{id}} =
                 $self->submit_order($new_o,
                                     on_match => $o->{on_match}, on_summary => $o->{on_summary});
