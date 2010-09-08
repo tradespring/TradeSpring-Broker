@@ -57,7 +57,8 @@ sub mk_cb {
                      ['ready', $order_id2, 'new']]);
     @$log = ();
     $broker->on_price(6990);
-    is_deeply($log, [['match', 6990, 1],
+    is_deeply($log, [['ready', $order_id3, 'new'],
+                     ['match', 6990, 1],
                      ['summary', 1, 0],
                      ['summary', 0, 1]]);
 

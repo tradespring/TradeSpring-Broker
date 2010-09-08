@@ -60,6 +60,7 @@ sub mk_cb {
     is_deeply($log, [['ready', $order_id, 'new'],
                      ['updating'],
                      ['ready', $order_id, 'new'],
+                     ['ready', $order_id, 'new'],
                      ['match', 6999, 1],
                      ['summary', 1, 0]
                  ]);
