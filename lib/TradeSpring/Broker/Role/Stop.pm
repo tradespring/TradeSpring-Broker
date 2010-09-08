@@ -47,7 +47,9 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             my $new_o = { %{$o->{order}}, type => 'mkt', price => 0 };
             $self->orders->{$new_o->{id}} =
                 $self->submit_order($new_o,
-                                    on_match => $o->{on_match}, on_summary => $o->{on_summary});
+                                    on_ready => $o->{on_ready},
+                                    on_match => $o->{on_match},
+                                    on_summary => $o->{on_summary});
         }
     }
 };
