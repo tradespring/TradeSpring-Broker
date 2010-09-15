@@ -40,7 +40,7 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             $o->{on_ready}->('new') if $o->{on_ready};
         }
         my ($t) = $time =~ qr/(\d{2}:\d{2}:\d{2})/;
-        if ($o->{timed} ge $time) {
+        if ($t ge $o->{order}{timed}) {
             $o->{cancelled}++;
             delete $self->timed_orders->{$_};
             delete $o->{order}{timed};
@@ -50,6 +50,6 @@ before 'on_price' => method ($price, $qty_limit, $time) {
                                     on_match => $o->{on_match}, on_summary => $o->{on_summary});
         }
     }
-}
+};
 
 __PACKAGE__
