@@ -36,8 +36,7 @@ method register_order {
     $self->orders->{$id} = $self->submit_order($order, %callbacks,
                                                $on_summary ?
                                                    (on_summary => sub {
-                                                        $on_summary->(@_);
-                                                        my $o = delete $self->orders->{$id};
+                                                        my $o = $self->orders->{$id};
                                                         if ($o->{matched}) {
                                                             my $order = $o->{order};
                                                             $order->{qty} = $o->{matched};
@@ -45,6 +44,8 @@ method register_order {
                                                             $order->{fill_time} = $o->{last_fill_time};
                                                             $self->filled_orders->{$id} = $order;
                                                         }
+                                                        $on_summary->(@_);
+                                                        delete $self->orders->{$id};
                                                     }) : (),
                                                $on_ready ?
                                                    (on_ready => sub { $on_ready->($id, @_) }) : ()
