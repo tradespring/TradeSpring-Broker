@@ -69,9 +69,12 @@ method on_price ($price, $qty_limit, $time) {
 
             $self->fill_order($o, $p, $qty, $time);
         }
+        if ($o->{order}{qty} != $o->{matched} &&
+            $o->{order}{tif} && $o->{order}{tif} eq 'IOC') {
+            $self->cancel_order($_, sub {});
+        }
     }
 }
-
 
 after 'fill_order' => method ($o) {
     if ($o->{matched} == $o->{order}{qty}) {
