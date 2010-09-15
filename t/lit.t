@@ -4,7 +4,7 @@ use Test::More;
 use TradeSpring::Broker::Local;
 
 my $broker = TradeSpring::Broker::Local->new_with_traits
-     (traits => ['LIT']);
+     (traits => ['LIT', 'Update']);
 
 my $order = {};
 
@@ -128,6 +128,61 @@ sub mk_cb {
     is(scalar keys %{$broker->local_orders}, 0);
     is(scalar keys %{$broker->lit_orders}, 0);
     is(scalar keys %{$broker->orders}, 0);
+}
+
+{ # lit with update
+    my $log = [];
+    my $order_id = $broker->register_order( { dir => 1,
+                                              type => 'lit',
+                                              tif => 'ROD',
+                                              price => 7000,
+                                              qty => 10 },
+                                            mk_cb($log, 1));
+    diag $order_id;
+    $broker->on_price(7010);
+    is_deeply($log, [['ready', $order_id, 'new']]);
+
+    @$log = ();
+
+    $broker->on_price(7000, 1);
+    $broker->on_price(7000, 1);
+
+    is_deeply($log, [['ready', $order_id, 'new'],
+                     ['match', 7000, 1],
+                     ['match', 7000, 1],
+                 ]);
+
+    is(scalar keys %{$broker->local_orders}, 1);
+    is(scalar keys %{$broker->lit_orders}, 1);
+    is(scalar keys %{$broker->orders}, 1);
+
+    @$log = ();
+    $broker->update_order($order_id, 6999, undef, sub { 'updated' });
+
+    is_deeply($log, []);
+
+    is(scalar keys %{$broker->local_orders}, 0);
+    is(scalar keys %{$broker->lit_orders}, 1);
+    is(scalar keys %{$broker->orders}, 1);
+
+    $broker->on_price(7000, 1);
+    is_deeply($log, [['ready', $order_id, 'new']]);
+
+    @$log = ();
+    $broker->on_price(6999, 1);
+    is_deeply($log, [['ready', $order_id, 'new'],
+                     ['match', 6999, 1]]);
+
+    is(scalar keys %{$broker->local_orders}, 1);
+    is(scalar keys %{$broker->lit_orders}, 1);
+    is(scalar keys %{$broker->orders}, 1);
+
+    @$log = ();
+    $broker->on_price(6999, 10);
+
+    is_deeply($log, [['match', 6999, 7],
+                     ['summary', 8, 0]]);
+
 }
 
 
