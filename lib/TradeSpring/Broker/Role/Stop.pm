@@ -1,7 +1,6 @@
 package TradeSpring::Broker::Role::Stop;
 use Moose::Role;
 use Method::Signatures::Simple;
-use Hash::Util::FieldHash qw(id);
 
 requires 'on_price';
 

@@ -49,9 +49,9 @@ sub mk_cb {
     $broker->on_price(6999, 1);
     $broker->on_price(6998, 9);
     is_deeply($log, [['ready', $order_id, 'new'],
-                     ['match', 7000, 1],
+                     ['match', 6999, 1],
                      ['ready', $order_id, 'new'],
-                     ['match', 7000, 7],
+                     ['match', 6998, 7],
                      ['summary', 10, 0]]);
 
     is(scalar keys %{$broker->local_orders}, 0);

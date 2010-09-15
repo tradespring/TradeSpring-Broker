@@ -21,7 +21,7 @@ method submit_order ($order, %args) {
       matched => 0,
       execute =>
           ( $type eq 'mkt' ? sub { $_[0] }
-          : $type eq 'lmt' ? sub { $_[0] * $order->{dir} <= $order->{price} * $order->{dir} ? $order->{price} : undef }
+          : $type eq 'lmt' ? sub { $_[0] * $order->{dir} <= $order->{price} * $order->{dir} ? $_[0] : undef }
           : die "unknown order type: $type" ),
       %args };
 
@@ -59,7 +59,7 @@ method on_price ($price, $qty_limit, $time) {
             $o->{on_ready}->('new') if $o->{on_ready};
         }
         if (my $p = $o->{execute}->($price)) {
-            if ($o->{order}{type} eq 'lmt' && $p == $price) {
+            if ($o->{order}{type} eq 'lmt' && $o->{order}{price} == $price) {
                 if (int(rand(100)) >= $self->hit_probability*100) {
                     return;
                 }
