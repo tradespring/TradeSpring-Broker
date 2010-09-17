@@ -57,6 +57,7 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             $o->{_current_order} =
                 $self->submit_order
                     ($new_o,
+                     on_ready => $o->{on_error},
                      on_ready => $o->{on_ready},
                      on_match => sub {
                          $o->{on_match}->(@_);

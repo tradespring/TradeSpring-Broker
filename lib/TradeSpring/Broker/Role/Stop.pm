@@ -50,6 +50,7 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             $self->orders->{$new_o->{id}} =
                 $self->submit_order($new_o,
                                     on_ready => $o->{on_ready},
+                                    on_error => $o->{on_error},
                                     on_match => $o->{on_match},
                                     on_summary => $o->{on_summary});
         }

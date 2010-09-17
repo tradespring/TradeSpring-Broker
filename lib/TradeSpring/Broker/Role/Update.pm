@@ -15,6 +15,7 @@ method update_order($id, $price, $qty, $cb) {
 #        warn "resubmitting updated order: ".Dumper($new_o);use Data::Dumper;
         $self->orders->{$id} = $self->submit_order( $new_o,
                                                     on_summary => $summary,
+                                                    on_error => $o->{on_error},
                                                     on_match => $o->{on_match},
                                                     on_ready => !$new_o->{_updated} ? sub {
                                                         my $status = shift;
