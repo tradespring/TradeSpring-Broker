@@ -52,7 +52,21 @@ sub mk_cb {
 
     $broker->on_price(6999, 1);
     is_deeply($log, [['match', 7000, 1],
-                     ['match', 6999, 1],
+                     ['match', 7000, 1],
+                     ['summary', 2, 0]]);
+
+    is(scalar keys %{$broker->local_orders}, 0);
+}
+
+{
+    my $log = [];
+    my $order_id = $broker->register_order( 1, 'lmt', 7000, 2,
+                                            mk_cb($log));
+
+    $broker->on_price(6998, 1);
+    $broker->on_price(6999, 1);
+    is_deeply($log, [['match', 6998, 1],
+                     ['match', 7000, 1],
                      ['summary', 2, 0]]);
 
     is(scalar keys %{$broker->local_orders}, 0);
@@ -100,8 +114,8 @@ sub mk_cb {
     $broker->cancel_order($order_id,
                           sub { push @$log, ['cancel', @_] } );
 
-    is_deeply($log, [['match', 6999, 1],
-                     ['match', 6998, 4],
+    is_deeply($log, [['match', 7000, 1],
+                     ['match', 7000, 4],
                      ['summary', 5, 0]]);
 
     is(scalar keys %{$broker->local_orders}, 0);

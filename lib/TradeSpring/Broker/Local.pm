@@ -21,7 +21,7 @@ method submit_order ($order, %args) {
       matched => 0,
       execute =>
           ( $type eq 'mkt' ? sub { $_[0] }
-          : $type eq 'lmt' ? sub { $_[0] * $order->{dir} <= $order->{price} * $order->{dir} ? $_[0] : undef }
+          : $type eq 'lmt' ? sub { $_[0] * $order->{dir} <= $order->{price} * $order->{dir} ? $order->{price} : undef }
           : die "unknown order type: $type" ),
       %args };
 
@@ -54,7 +54,9 @@ method on_price ($price, $qty_limit, $time) {
     for (keys %{$self->local_orders}) {
         my $o = $self->local_orders->{$_};
         next if !$o || $o->{cancelled};
+        my $just_submitted;
         unless ($o->{submitted}) {
+            $just_submitted = 1;
             ++$o->{submitted};
             $o->{on_ready}->('new') if $o->{on_ready};
         }
@@ -65,6 +67,9 @@ method on_price ($price, $qty_limit, $time) {
                 }
             }
 
+            if ($just_submitted) {
+                $p = $price;
+            }
             my $qty = min($qty_limit ? $qty_limit : (), $o->{order}{qty} - $o->{matched});
 
             $self->fill_order($o, $p, $qty, $time);

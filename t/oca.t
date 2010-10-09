@@ -4,7 +4,7 @@ use Test::More;
 use TradeSpring::Broker::Local;
 
 my $broker = TradeSpring::Broker::Local->new_with_traits
-     (traits => ['Stop', 'Attached', 'OCA']);
+     (traits => ['Stop', 'Update', 'Attached', 'OCA']);
 
 my $order = {};
 
@@ -70,5 +70,88 @@ sub mk_cb {
     $broker->on_price(7010);
     is_deeply($log, []);
 }
+
+
+{
+    my $log = [];
+    my $order_id = $broker->register_order( { dir => 1, type => 'lmt', price => 7000, qty => 1 },
+                                            mk_cb($log, 1));
+    diag $order_id;
+
+    $broker->on_price(7010);
+    is_deeply($log, [['ready', $order_id, 'new']]);
+
+    my $order_id2 = $broker->register_order( { dir => -1, type => 'lmt', price => 7010, qty => 1,
+                                               attached_to => $order_id, oca_group => $order_id },
+                                             mk_cb($log, 1) );
+#    diag "TP: $order_id2";
+
+    my $order_id3 = $broker->register_order( { dir => -1, type => 'stp', price => 6990, qty => 1,
+                                               attached_to => $order_id, oca_group => $order_id },
+                                             mk_cb($log, 1));
+#    diag "SL: $order_id3";
+    $broker->on_price(7010);
+    my $wait = AE::cv;
+    my $w; $w = AE::timer(0.5, 0, sub { undef $w; $wait->send });
+    $wait->recv;
+
+    is_deeply($log, [['ready', $order_id, 'new'],
+                     ['ready', $order_id2, 'submitted'],
+                     ['ready', $order_id3, 'submitted']]);;
+
+    @$log = ();
+
+
+
+    $broker->on_price(7000);
+    is_deeply($log, [['match', 7000, 1],
+                     ['summary', 1, 0]
+                 ]);
+
+
+    @$log = ();
+    $broker->on_price(7001);
+    is_deeply($log, [['ready', $order_id3, 'new'],
+                     ['ready', $order_id2, 'new']]);
+
+    $broker->update_order( $order_id2, 7011, undef, sub {
+                               push @$log, ['updating'];
+                           });
+
+#    $broker->update_order( $order_id3, 6981, undef, sub {
+#                               push @$log, ['updating'];
+#                           });
+
+
+    $broker->on_price(7010);
+    my $w; $w = AE::timer(0.5, 0, sub { undef $w; $wait->send });
+    $wait->recv;
+
+    is_deeply($log, [#['ready', $order_id, 'new'],
+        ['ready'],
+        ['updating'],
+                     ['ready', $order_id2, 'submitted'],
+                     ['ready', $order_id3, 'submitted']]);;
+
+    @$log = ();
+
+
+
+    @$log = ();
+    $broker->on_price(6990);
+    is_deeply($log, [['ready', $order_id3, 'new'],
+                     ['match', 6990, 1],
+                     ['summary', 1, 0],
+                     ['summary', 0, 1]]);
+
+    is(scalar keys %{$broker->local_orders}, 0);
+
+    @$log = ();
+    $broker->on_price(6990);
+    is_deeply($log, []);
+    $broker->on_price(7012);
+    is_deeply($log, []);
+}
+
 
 done_testing;
