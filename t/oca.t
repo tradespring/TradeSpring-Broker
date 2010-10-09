@@ -114,28 +114,17 @@ sub mk_cb {
     is_deeply($log, [['ready', $order_id3, 'new'],
                      ['ready', $order_id2, 'new']]);
 
+    @$log = ();
     $broker->update_order( $order_id2, 7011, undef, sub {
                                push @$log, ['updating'];
                            });
 
-#    $broker->update_order( $order_id3, 6981, undef, sub {
-#                               push @$log, ['updating'];
-#                           });
-
-
     $broker->on_price(7010);
-    my $w; $w = AE::timer(0.5, 0, sub { undef $w; $wait->send });
+    $w = AE::timer(0.5, 0, sub { undef $w; $wait->send });
     $wait->recv;
 
-    is_deeply($log, [#['ready', $order_id, 'new'],
-        ['ready'],
-        ['updating'],
-                     ['ready', $order_id2, 'submitted'],
-                     ['ready', $order_id3, 'submitted']]);;
-
-    @$log = ();
-
-
+    is_deeply($log, [['updating'],
+                     ['ready', $order_id2, 'new']]);
 
     @$log = ();
     $broker->on_price(6990);
