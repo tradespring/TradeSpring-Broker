@@ -59,8 +59,13 @@ method on_price ($price, $qty_limit, $time) {
         my $o = $self->local_orders->{$_};
         next if !$o || $o->{cancelled};
         my $just_submitted;
-        unless ($o->{submitted}) {
+
+        unless ($o->{seen_order}) {
             $just_submitted = 1;
+            ++$o->{seen_order};
+        }
+
+        unless ($o->{submitted}) {
             ++$o->{submitted};
             delete $o->{on_ready_timer};
             $o->{on_ready}->('new') if $o->{on_ready};
