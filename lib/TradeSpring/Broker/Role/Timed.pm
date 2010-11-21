@@ -40,6 +40,9 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             $o->{on_ready}->('new') if $o->{on_ready};
         }
         my ($t) = $time =~ qr/(\d{2}:\d{2}:\d{2})/;
+        unless ($t) {
+            warn "incorrect time format: $time";
+        }
         if ($t ge $o->{order}{timed}) {
             $o->{cancelled}++;
             delete $self->timed_orders->{$_};
