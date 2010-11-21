@@ -27,15 +27,16 @@ method submit_order ($order, %args) {
 
     my $id = $order->{id};
 
-    my $w; $w = AnyEvent->timer( after => 0.5, cb => sub {
-                                     undef $w;
-                                     unless ($o->{submitted}) {
-                                         ++$o->{submitted};
-                                         $o->{on_ready}->('new')
-                                     }
-                                 })
-         if $o->{on_ready};
-#    warn 'new order: '.Dumper($order);use Data::Dumper;
+    $o->{on_ready_timer} = AnyEvent->timer( after => 0.5,
+                                            cb => sub {
+                                                delete $o->{on_ready_cv};
+                                                return if $o->{submitted} || $o->{cancelled};
+                                                unless ($o->{submitted}) {
+                                                    ++$o->{submitted};
+                                                    $o->{on_ready}->('new')
+                                                }
+                                            })
+        if $o->{on_ready};
     return $self->local_orders->{$id} = $o;
 }
 
@@ -45,6 +46,9 @@ method cancel_order ($id, $cb) {
     $cb->('cancelled');
     $o->{cancelled}++;
     $o->{on_summary}->($o->{matched}, $o->{order}{qty} - $o->{matched});
+    $o->{cancelled}++;
+    delete $o->{execute};
+    delete $o->{on_ready_timer};
     return 1;
 }
 
@@ -58,6 +62,7 @@ method on_price ($price, $qty_limit, $time) {
         unless ($o->{submitted}) {
             $just_submitted = 1;
             ++$o->{submitted};
+            delete $o->{on_ready_timer};
             $o->{on_ready}->('new') if $o->{on_ready};
         }
         if (my $p = $o->{execute}->($price)) {
@@ -83,6 +88,7 @@ method on_price ($price, $qty_limit, $time) {
 
 after 'fill_order' => method ($o) {
     if ($o->{matched} == $o->{order}{qty}) {
+        delete $o->{execute};
         delete $self->local_orders->{$o->{order}{id}};
     }
 };

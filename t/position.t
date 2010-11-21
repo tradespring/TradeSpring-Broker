@@ -58,14 +58,14 @@ sub mk_cb {
     my $order_id4 = $broker->register_order( { dir => 1, type => 'mkt', price => 0, qty => 1 },
                                              mk_cb($log, 1));
 
-
     $broker->on_price(7001);
     is_deeply($log, [['ready', $order_id3, 'new'],
+                     ['ready', $order_id2, 'new'],
                      ['ready', $order_id4, 'new'],
                      ['match', 7001, 1],
                      ['summary', 1, 0],
-                     ['ready', $order_id2, 'new'],
                  ]);
+
     is ($broker->position, 2);
     @$log = ();
     $broker->on_price(6990);

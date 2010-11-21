@@ -45,6 +45,8 @@ method register_order {
                                                             $self->filled_orders->{$id} = $order;
                                                         }
                                                         $on_summary->(@_);
+                                                        undef $on_ready;
+                                                        undef $on_summary;
                                                         delete $self->orders->{$id};
                                                     }) : (),
                                                $on_ready ?

@@ -32,7 +32,7 @@ around 'submit_order' => sub {
             my ($filled, $cancelled) = @_;
             $summary->($filled, $cancelled);
 
-            my $ids = $self->attached->{$id} or return;
+            my $ids = delete $self->attached->{$id} or return;
             if ($filled) {
                 for my $oid (@$ids) {
                     my $oo = $self->get_order($oid);
