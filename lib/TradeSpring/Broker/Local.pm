@@ -12,6 +12,8 @@ has '+_trait_namespace' => (default => 'TradeSpring::Broker::Role');
 has local_orders => (is => "rw", isa => "HashRef", default => sub { {} });
 has hit_probability => (is => "rw", isa => "Int", default => sub { 1 });
 
+has timestamp => (is => "rw", isa => "Num");
+
 method submit_order ($order, %args) {
     my $type = $order->{type};
     die unless $type eq 'mkt' || $type eq 'lmt';
@@ -37,6 +39,7 @@ method submit_order ($order, %args) {
                                                 }
                                             })
         if $o->{on_ready};
+    $self->{timestamp} = AnyEvent->now;
     return $self->local_orders->{$id} = $o;
 }
 
