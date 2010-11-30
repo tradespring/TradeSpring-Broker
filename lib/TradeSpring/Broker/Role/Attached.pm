@@ -32,8 +32,8 @@ around 'submit_order' => sub {
             my ($filled, $cancelled) = @_;
             $summary->($filled, $cancelled);
 
-            my $ids = delete $self->attached->{$id} or return;
             if ($filled) {
+                my $ids = delete $self->attached->{$id} or return;
                 for my $oid (@$ids) {
                     my $oo = $self->get_order($oid);
                     my $new_o = { %{delete $oo->{order}} };
@@ -44,11 +44,12 @@ around 'submit_order' => sub {
                 }
             }
             else {
-                for my $oid (@$ids) {
+                while (my $oid = shift @{$self->attached->{$id}}) {
                     $self->cancel_order($oid, sub {
                                             # warn "cancelling from attach root"
                                         });
                 }
+                delete $self->attached->{$id};
             }
         };
         return $o;
