@@ -49,7 +49,6 @@ method cancel_order ($id, $cb) {
     $cb->('cancelled');
     $o->{cancelled}++;
     $o->{on_summary}->($o->{matched}, $o->{order}{qty} - $o->{matched});
-    $o->{cancelled}++;
     delete $o->{execute};
     delete $o->{on_ready_timer};
     return 1;
