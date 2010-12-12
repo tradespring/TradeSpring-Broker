@@ -181,8 +181,7 @@ sub mk_cb {
     $broker->on_price(6999, 10);
 
     is_deeply($log, [['match', 6999, 7],
-                     ['summary', 8, 0]]);
-
+                     ['summary', 10, 0]]);
 }
 
 

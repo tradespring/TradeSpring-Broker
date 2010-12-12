@@ -11,20 +11,28 @@ method update_order($id, $price, $qty, $cb) {
         my ($filled, $cancelled) = @_;
         my $new_o = { %{$o->{order}} };
         $new_o->{price} = $price if defined $price;
-        $new_o->{qty} = $qty ? $qty : $cancelled;
+        $new_o->{qty} = $qty ? $qty - $filled : $cancelled;
 #        warn "resubmitting updated order: ".Dumper($new_o);use Data::Dumper;
-        $self->orders->{$id} = $self->submit_order( $new_o,
-                                                    on_summary => $summary,
-                                                    on_error => $o->{on_error},
-                                                    on_match => $o->{on_match},
-                                                    on_ready => !$new_o->{_updated} ? sub {
-                                                        my $status = shift;
-#                                                        warn "==> status after update: $status";
-#                                                        $status = 'updated' if $status eq 'new' || $status eq 'submitted';
-                                                        $o->{on_ready}->($status);
-                                                    } : $o->{on_ready} );
+        my $new = $self->orders->{$id} =
+            $self->submit_order( $new_o,
+                                 on_summary => $summary,
+                                 on_error => $o->{on_error},
+                                 on_match => $o->{on_match},
+                                 on_ready => !$new_o->{_updated} ? sub {
+                                     my $status = shift;
+                                     # warn "==> status after update: $status";
+                                     # $status = 'updated' if $status eq 'new' || $status eq 'submitted';
+                                     $o->{on_ready}->($status);
+                                 } : $o->{on_ready} );
+        # maintain original order state
+        $new->{matched} = $o->{matched};
+        $new->{order}{qty} += $o->{matched};
+        $new->{price_sum} = $o->{price_sum};
+        $new->{last_fill_time} = $o->{last_fill_time};
         $new_o->{_updated} = 1;
         $cb->('updated');
+        delete $o->{on_summary};
+
     };
     $self->cancel_order($o->{order}{id}, sub {
                             # XXX need to revert?
