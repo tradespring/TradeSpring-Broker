@@ -26,6 +26,7 @@ around 'cancel_order' => sub {
     my ($self, $id, $cb) = @_;
     if (my $o = delete $self->stp_orders->{$id}) {
         $o->{cancelled}++;
+        $cb->('cancelled');
         return $o->{on_summary}->(0, $o->{order}{qty});
     }
     $next->(@_);
