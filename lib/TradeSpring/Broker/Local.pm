@@ -13,6 +13,7 @@ has local_orders => (is => "rw", isa => "HashRef", default => sub { {} });
 has hit_probability => (is => "rw", isa => "Int", default => sub { 1 });
 
 has timestamp => (is => "rw", isa => "Num");
+has last_price => (is => "rw", isa => "Num");
 
 method submit_order ($order, %args) {
     my $type = $order->{type};
@@ -57,6 +58,7 @@ method cancel_order ($id, $cb) {
 use List::MoreUtils qw(part);
 
 method on_price ($price, $qty_limit, $time) {
+    $self->{last_price} = $price;
     for (keys %{$self->local_orders}) {
         my $o = $self->local_orders->{$_};
         next if !$o || $o->{cancelled};
