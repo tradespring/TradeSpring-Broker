@@ -52,9 +52,15 @@ sub mk_cb {
     $broker->on_price(6999);
     is_deeply($log, [['ready', $order_id, 'new']]);
 
+    my $o = $broker->get_order( $order_id );
+    is $o->{order}{price}, 7000;
+
     $broker->update_order( $order_id, 6999, undef, sub {
                                push @$log, ['updating'];
                            });
+
+    $o = $broker->get_order( $order_id );
+    is $o->{order}{price}, 6999;
 
     $broker->on_price(6999);
     is_deeply($log, [['ready', $order_id, 'new'],
