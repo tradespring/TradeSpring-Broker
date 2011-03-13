@@ -57,7 +57,7 @@ method cancel_order ($id, $cb) {
 
 use List::MoreUtils qw(part);
 
-method on_price ($price, $qty_limit, $time) {
+method on_price ($price, $qty_limit, $meta) {
     $self->{last_price} = $price;
     for (keys %{$self->local_orders}) {
         my $o = $self->local_orders->{$_};
@@ -86,7 +86,7 @@ method on_price ($price, $qty_limit, $time) {
             }
             my $qty = min($qty_limit ? $qty_limit : (), $o->{order}{qty} - $o->{matched});
 
-            $self->fill_order($o, $p, $qty, $time);
+            $self->fill_order($o, $p, $qty, $meta);
         }
         if ($o->{order}{qty} != $o->{matched} &&
             $o->{order}{tif} && $o->{order}{tif} eq 'IOC') {

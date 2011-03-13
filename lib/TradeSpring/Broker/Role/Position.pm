@@ -20,7 +20,7 @@ around 'submit_order' => sub {
     return $next->(@_);
 };
 
-before fill_order => method($o, $price, $qty, $time) {
+before fill_order => method($o, $price, $qty, $meta) {
     $self->set_position( $self->position + $o->{order}{dir} * $qty );
 };
 

@@ -82,12 +82,12 @@ method unregister_order ($id, $cb) {
                         });
 }
 
-method fill_order ($o, $price, $qty, $time) {
+method fill_order ($o, $price, $qty, $meta) {
     $o->{matched} += $qty;
     $o->{price_sum} ||= 0;
     $o->{price_sum} += $price * $qty;
     $o->{on_match}->($price, $qty);
-    $o->{last_fill_time} = $time;
+    $o->{last_fill_time} = $meta->{timestamp};
     if ($o->{matched} == $o->{order}{qty}) {
         $o->{on_summary}->($o->{matched}, 0);
     }

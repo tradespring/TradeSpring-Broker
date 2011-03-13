@@ -2,6 +2,7 @@ package TradeSpring::Broker::Role::Timed;
 use Moose::Role;
 use Method::Signatures::Simple;
 use AnyEvent;
+use Scalar::Util qw(looks_like_number);
 
 has timed_orders => (is => "rw", isa => "HashRef", default => sub { {} } );
 
@@ -10,7 +11,10 @@ around 'submit_order' => sub {
     my ($self, $order, %args) = @_;
 
     if (my $timed = $order->{timed}) {
-
+        unless (looks_like_number $timed) {
+            warn "incorrect time format: $timed";
+            return $next->(@_);
+        }
         my $o =
         { order => $order,
           matched => 0,
@@ -31,7 +35,7 @@ around 'cancel_order' => sub {
     $next->(@_);
 };
 
-before 'on_price' => method ($price, $qty_limit, $time) {
+before 'on_price' => method ($price, $qty_limit, $meta) {
     for (keys %{$self->timed_orders}) {
         my $o = $self->timed_orders->{$_};
         next if !$o || $o->{cancelled};
@@ -39,11 +43,10 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             ++$o->{submitted};
             $o->{on_ready}->('new') if $o->{on_ready};
         }
-        my ($t) = $time =~ qr/(\d{2}:\d{2}:\d{2})/;
-        unless ($t) {
-            warn "incorrect time format: $time";
+        unless (ref $meta) {
+            warn "incorrect meta format for time: $meta";
         }
-        if ($t ge $o->{order}{timed}) {
+        if ($meta->{timestamp} >= $o->{order}{timed}) {
             $o->{cancelled}++;
             delete $self->timed_orders->{$_};
             delete $o->{order}{timed};
