@@ -7,6 +7,7 @@ requires 'Method::Signatures::Simple';
 requires 'Moose';
 requires 'Log::Log4perl';
 requires 'MooseX::ClassAttribute';
+requires 'MooseX::Traits';
 requires 'AnyEvent';
 
 auto_include_deps;
