@@ -40,6 +40,15 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             ++$o->{submitted};
             $o->{on_ready}->('new') if $o->{on_ready};
         }
+        if (exists $o->{order}{effective} && exists $o->{order}{trail}) {
+            if ( $price * $o->{order}{dir} <= $o->{order}{effective} * $o->{order}{dir} ) {
+                $o->{order}{price} ||= $o->{order}{effective} + $o->{order}{trail} * $o->{order}{dir};
+                delete $o->{order}{effective};
+            }
+            else {
+                next;
+            }
+        }
         if ($o->{execute}->($price)) {
             $o->{cancelled}++;
             delete $self->stp_orders->{$_};
@@ -54,6 +63,11 @@ before 'on_price' => method ($price, $qty_limit, $time) {
                                     on_error => $o->{on_error},
                                     on_match => $o->{on_match},
                                     on_summary => $o->{on_summary});
+        }
+        elsif (my $t = $o->{order}{trail}) {
+            if ( $price * $o->{order}{dir} + $t < $o->{order}{price} * $o->{order}{dir} ) {
+                $o->{order}{price} = $price + $t * $o->{order}{dir};
+            }
         }
     }
 };
