@@ -21,7 +21,9 @@ around 'submit_order' => sub {
 };
 
 before fill_order => method($o, $price, $qty, $meta) {
-    $self->set_position( $self->position + $o->{order}{dir} * $qty );
+    my $old_pos = $self->position;
+    $self->set_position( $old_pos + $o->{order}{dir} * $qty );
+    $self->log->info("Broker position update on fill $price/$qty: $old_pos -> ".$self->position);
 };
 
 __PACKAGE__

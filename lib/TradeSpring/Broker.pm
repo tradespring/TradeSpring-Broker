@@ -6,6 +6,7 @@ use Method::Signatures::Simple;
 use List::Util qw(min);
 
 with 'MooseX::Traits';
+with 'MooseX::Log::Log4perl';
 
 has '+_trait_namespace' => (default => 'TradeSpring::Broker::Role');
 
