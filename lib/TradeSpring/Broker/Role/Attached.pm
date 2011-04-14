@@ -13,6 +13,7 @@ around 'submit_order' => sub {
         my $id = $order->{id};
 #        warn "has attachement ($id depends on $attached_to";
         my $o = { order => $order,
+                  matched => 0,
                   %args };
         my $w; $w = AnyEvent->timer(after=>0.1, cb => sub {
                                         $args{on_ready}->('submitted'); undef $w })
