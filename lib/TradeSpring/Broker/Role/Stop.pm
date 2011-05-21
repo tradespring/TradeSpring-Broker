@@ -57,6 +57,8 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             my $new_o = { %{$o->{order}}, $stplmt ?
                                     (type => 'lmt', price => $stplmt)
                                   : (type => 'mkt', price => 0) };
+            # XXX: stp order now replaced, we need original order to
+            # get original submitted price :/
             $self->orders->{$new_o->{id}} =
                 $self->submit_order($new_o,
                                     on_ready => $o->{on_ready},
