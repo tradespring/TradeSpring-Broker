@@ -8,6 +8,7 @@ requires 'Moose';
 requires 'Log::Log4perl';
 requires 'MooseX::ClassAttribute';
 requires 'MooseX::Traits';
+requires 'MooseX::Log::Log4perl';
 requires 'AnyEvent';
 
 auto_include_deps;
