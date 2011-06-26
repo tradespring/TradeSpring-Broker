@@ -64,7 +64,9 @@ method get_order ($id) {
 }
 
 method get_orders($cb) {
-    for (keys %{$self->filled_orders}) {
+    my $filled = $self->filled_orders;
+    for (sort { $filled->{$a}{fill_time} <=> $filled->{$b}{fill_time} }
+         keys %{$filled}) {
         $cb->('filled', $_, $self->filled_orders->{$_}); # XXX
     }
     for (sort { ($self->orders->{$a}->{order}{attached_to} || 0) <=> ($self->orders->{$b}->{order}{attached_to} || 0) }
