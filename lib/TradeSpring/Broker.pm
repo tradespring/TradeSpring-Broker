@@ -69,7 +69,7 @@ method get_orders($cb) {
          keys %{$filled}) {
         $cb->('filled', $_, $self->filled_orders->{$_}); # XXX
     }
-    for (sort { ($self->orders->{$a}->{order}{attached_to} || 0) <=> ($self->orders->{$b}->{order}{attached_to} || 0) }
+    for (sort { ($self->orders->{$a}->{order}{attached_to} ? 1 : 0) <=> ($self->orders->{$b}->{order}{attached_to} ? 1 : 0) }
              keys %{$self->orders}) {
         $cb->('new', $_, $self->orders->{$_}{order}); # XXX: status
     }
