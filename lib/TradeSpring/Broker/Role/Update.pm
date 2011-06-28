@@ -9,6 +9,11 @@ method update_order($id, $price, $qty, $cb) {
 
     $o->{on_summary} = sub {
         my ($filled, $cancelled) = @_;
+
+        # fully filled while we are cancelling
+        return $summary->($filled, $cancelled)
+            unless $cancelled;
+
         my $new_o = { %{$o->{order}} };
         $new_o->{price} = $price if defined $price;
         $new_o->{qty} = $qty ? $qty - $filled : $cancelled;
