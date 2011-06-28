@@ -11,6 +11,8 @@ requires 'MooseX::Traits';
 requires 'MooseX::Log::Log4perl';
 requires 'AnyEvent';
 
+test_requires 'Test::LeakTrace';
+
 auto_include_deps;
 author_tests('xt');
 WriteAll;
