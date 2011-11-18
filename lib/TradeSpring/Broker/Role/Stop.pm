@@ -54,11 +54,10 @@ before 'on_price' => method ($price, $qty_limit, $time) {
             delete $self->stp_orders->{$_};
 #            warn "==> submitting mkt  / $o->{order}{qty} / $o $o->{on_summary}";
             my $stplmt = delete $o->{order}{stplmt};
-            my $new_o = { %{$o->{order}}, $stplmt ?
+            my $new_o = { orig_order => $o->{order},
+                          %{$o->{order}}, $stplmt ?
                                     (type => 'lmt', price => $stplmt)
                                   : (type => 'mkt', price => 0) };
-            # XXX: stp order now replaced, we need original order to
-            # get original submitted price :/
             $self->orders->{$new_o->{id}} =
                 $self->submit_order($new_o,
                                     on_ready => $o->{on_ready},
