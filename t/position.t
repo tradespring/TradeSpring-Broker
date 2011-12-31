@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Test::More;
+use Test::Deep;
 use TradeSpring::Broker::Local;
 use Log::Log4perl::Level;
 
@@ -63,12 +64,18 @@ sub mk_cb {
 
     $broker->on_price(7001);
 
-    is_deeply($log, [['ready', $order_id3, 'new'],
-                     ['ready', $order_id2, 'new'],
-                     ['ready', $order_id4, 'new'],
-                     ['match', 7001, 1],
-                     ['summary', 1, 0],
-                 ]);
+    cmp_deeply(
+        [ grep { $_->[0] eq 'ready'} @$log ],
+        bag(['ready', $order_id3, 'new'],
+            ['ready', $order_id2, 'new'],
+            ['ready', $order_id4, 'new']));
+
+    is_deeply(
+        [ grep { $_->[0] ne 'ready'} @$log ],
+        [
+            ['match', 7001, 1],
+            ['summary', 1, 0],
+        ]);
 
     is ($broker->position, 2);
     @$log = ();

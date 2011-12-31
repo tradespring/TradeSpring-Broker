@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use Test::More;
+use Test::Deep;
 use TradeSpring::Broker::Local;
 
 my $broker = TradeSpring::Broker::Local->new_with_traits
@@ -63,10 +64,14 @@ sub mk_cb {
     $w = AE::timer(0.5, 0, sub { undef $w; $wait->send });
     $wait->recv;
 
-    is_deeply($log, [['ready', $order_id3, 'new'],
-                     ['ready', $order_id4, 'new'],
-                     ['ready', $order_id2, 'new'],
-                 ]);
+    cmp_deeply(
+        $log,
+        bag(['ready', $order_id3, 'new'],
+            ['ready', $order_id4, 'new'],
+            ['ready', $order_id2, 'new']
+        )
+    );
+
     @$log = ();
     $broker->on_price(7009);
     $broker->on_price(7009);
