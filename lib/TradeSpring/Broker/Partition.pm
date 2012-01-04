@@ -35,15 +35,21 @@ method submit_order ($order, %args) {
 
     my $qty = $order->{qty};
     my $ready_cv = AE::cv;
+    my $new_ready = AE::cv;
     my $ready_type;
     $ready_cv->cb(
         sub {
-            $args{on_ready}->($ready_type);
+            $o->{on_ready}->($ready_type);
+            $ready_cv = $new_ready;
+            undef $ready_type;
+            $new_ready = AE::cv;
+            $new_ready->cb($ready_cv->cb);
         } );
+    $new_ready->cb($ready_cv->cb);
     my $summary_cv = AE::cv;
     $summary_cv->cb(sub {
                         my $unfilled = $o->{order}{qty} - $o->{matched};
-                        $args{on_summary}->($o->{matched}, $unfilled)
+                        $o->{on_summary}->($o->{matched}, $unfilled)
                             if $unfilled;
                     } );
     for my $b (@{$self->backends}) {
@@ -57,7 +63,7 @@ method submit_order ($order, %args) {
             delete $thiso->{id};
             $ready_cv->begin;
             $summary_cv->begin;
-            my $thisid = $b->{broker}->register_order(
+            my $thisid; $thisid = $b->{broker}->register_order(
                 $thiso,
                 on_ready => sub {
                     my ($id,$type) = @_;
@@ -65,8 +71,9 @@ method submit_order ($order, %args) {
                         $ready_type = $type
                     }
                     elsif ($ready_type ne $type) {
-                        warn "==> wtf";
+                        $self->log->error("inconsistent $ready_type vs $type");
                     }
+                    $new_ready->begin;
                     $ready_cv->end;
                 },
                 on_match => sub {
@@ -91,7 +98,6 @@ method cancel_order ($id, $cb) {
     my $cancelled = AE::cv;
     $cancelled->cb(sub {
                        $cb->('cancelled');
-#                       $o->{on_summary}->($o->{matched}, $o->{order}{qty} - $o->{matched});
                    });
     for (@{$o->{_orders}}) {
         my ($b, $thisid) = @$_;
