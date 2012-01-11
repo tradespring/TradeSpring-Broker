@@ -65,6 +65,9 @@ method submit_order ($order, %args) {
             $summary_cv->begin;
             my $thisid; $thisid = $b->{broker}->register_order(
                 $thiso,
+                on_error => sub {
+                    $self->log->error(join(',', @_);)
+                },
                 on_ready => sub {
                     my ($id,$type) = @_;
                     unless ($ready_type) {
