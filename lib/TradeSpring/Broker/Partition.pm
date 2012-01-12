@@ -66,7 +66,7 @@ method submit_order ($order, %args) {
             my $thisid; $thisid = $b->{broker}->register_order(
                 $thiso,
                 on_error => sub {
-                    $self->log->error(join(',', @_);)
+                    $self->log->error(join(',', @_));
                 },
                 on_ready => sub {
                     my ($id,$type) = @_;
