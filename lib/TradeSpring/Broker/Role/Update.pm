@@ -3,6 +3,12 @@ use Moose::Role;
 use Method::Signatures::Simple;
 
 method update_order($id, $price, $qty, $cb) {
+    return;
+}
+
+around 'update_order' => sub {
+    my ($next, $self, $id, $price, $qty, $cb) = @_;
+    return if $self->$next($id, $price, $qty, $cb);
     my $o = $self->get_order($id);
 
     my $summary = $o->{on_summary};
@@ -43,6 +49,6 @@ method update_order($id, $price, $qty, $cb) {
                             # XXX need to revert?
 #                            warn "==> updating: ".$_[0];
                         });
-}
+};
 
 __PACKAGE__
